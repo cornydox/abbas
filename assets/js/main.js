@@ -23,7 +23,7 @@ $(function(){
         $.playground().startGame(function(){
             $("#welcome").remove();
             game.startControls();
-            sounds.bgm.play();
+            // sounds.bgm.play();
         });
     });
 

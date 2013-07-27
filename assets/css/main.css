@@ -63,7 +63,7 @@ textarea {
 /* ==========================================================================
    Author's custom styles
    ========================================================================== */
-
+#playground{-webkit-tap-highlight-color: rgba(0, 0, 0, 0);}
 
 #container {
   margin:0 auto;
@@ -71,8 +71,9 @@ textarea {
 }
 
 #playground {  
-  /*background: url('../img/welcome.png');*/
-  background-color: #000;  
+  background: url('../img/welcome.png');
+  background-color: #efefef;
+  border:5px solid #000;
 }
 
 #welcome {
@@ -100,9 +101,9 @@ textarea {
 
 #welcome p, #gameover p { font-size: 10px; color:#666; }
 
-#start, #gameover { text-align: center; color:#efefef; font-size: 30px; }
-#start:hover { color:#fff; cursor:pointer;}
-#gameover { color: #fff; padding-top:150px; text-align: center;}
+#start, #gameover { text-align: center; color:#333; font-size: 30px; }
+#start:hover { color:#000; cursor:pointer;}
+#gameover { color: #333; padding-top:150px; text-align: center;}
 
 
 

@@ -9,7 +9,7 @@ function Game(){
 		$("#playground").playground({
 			height: PLAYGROUND_HEIGHT,
 			width: PLAYGROUND_WIDTH,
-			keyTracker: true
+			mouseTracker: true
 		});
 
 		// Loading bar callback
@@ -40,14 +40,27 @@ function Game(){
 				imageURL: path + "position2.png",
 				numberOfFrame: 6, delta: 5, rate: 60,
 				type: $.gameQuery.ANIMATION_HORIZONTAL
+			}),
+			damage  : new $.gameQuery.Animation({imageURL: path + "position1.png"}),
+			flare  : new $.gameQuery.Animation({imageURL: path + "flare.png",
+				numberOfFrame: 6, delta: 2, rate: 100,
+				type: $.gameQuery.ANIMATION_VERTICAL})
+		};
+
+		animation["obstacle"] = {
+			bird : new $.gameQuery.Animation({
+				imageURL: path + "bird.png",
+				numberOfFrame: 4, delta: 100, rate: 105,
+				type: $.gameQuery.ANIMATION_HORIZONTAL
 			})
 		};
 
-		sounds = {
-			bgm    : new $.gameQuery.SoundWrapper("assets/sound/bgm.ogg", true),
-			swoosh : new $.gameQuery.SoundWrapper("assets/sound/swoosh.ogg", false),
-			boost : new $.gameQuery.SoundWrapper("assets/sound/boost.ogg", false)
-		};
+		// sounds = {
+		// 	bgm    : new $.gameQuery.SoundWrapper("assets/sound/wind.ogg", true),
+		// 	swoosh : new $.gameQuery.SoundWrapper("assets/sound/swoosh.ogg", false),
+		// 	boost : new $.gameQuery.SoundWrapper("assets/sound/boost.ogg", false),
+		// 	hit : new $.gameQuery.SoundWrapper("assets/sound/birdhit.ogg", false)
+		// };
 
 
 	};
@@ -91,29 +104,34 @@ function Game(){
 				height: PLAYGROUND_HEIGHT,
 				posx: BACKGROUND_WIDTH}).end()
         .addGroup("objects", {width: PLAYGROUND_WIDTH, height: PLAYGROUND_HEIGHT})
-			.addGroup("player", {posx: PLAYGROUND_WIDTH/2, posy: PLAYGROUND_HEIGHT/2,
+			.addGroup("player", {posx: 80, posy: 80,
                   width: 150, height: 100})
+				.addSprite("abbasFlare",{posx: 50, posy: 0, width: 100, height: 92})
 				.addSprite("abbas",{animation: animation["player"]["idle"],
-					posx: -350, posy: -200, width: 150, height: 100}).end()
-			.addGroup("obstacle", {posx: PLAYGROUND_WIDTH/2, posy: PLAYGROUND_HEIGHT/2,
-                  width: 150, height: 150});
+					posx: 0, posy: 0, width: 150, height: 100});
+			// .addGroup("obstacle", {posx: PLAYGROUND_WIDTH, posy: PLAYGROUND_HEIGHT,
+   //                width: 150, height: 150});
+
+		$("#player").addClass("player");
+		$("#player")[0].player = new Player($("#player"));
 	};
 
-	this.callback = function(){		
+	this.callback = function(){
 
 		helper.animateBackground(abbas.isBoosting());
+		helper.createObstacle();
 
-		// console.log('x : ' + $('#abbas').x() + ' , y :' + $('#abbas').y());
+		// console.log('x : ' + $('#player').x() + ' , y :' + $('#player').y());
 		// console.log(player_move.is_gliding());
-		if( $('#abbas').x() >= -350 && abbas.isGliding() === false ){
-			$('#abbas').x(-5,true);
+		if( $('#player').x() > 80 && abbas.isGliding() === false ){
+			$('#player').x(-5,true);
 		}
 
-		if( $('#abbas').y() <= 270 && abbas.isGliding() === false ){
-			$('#abbas').y(2, true);
+		if( abbas.isGliding() === false ){
+			$('#player').y(2, true);
 		}
 
-		if( $('#abbas').y() > 120 && GAME_OVER === false){
+		if( $('#player').y() > 350 && GAME_OVER === false){
 			helper.gameOver();
 			GAME_OVER = true;
 		}
@@ -127,7 +145,7 @@ function Game(){
 			}
 			else{
 				abbas.fly();
-				sounds.swoosh.play();
+				// sounds.swoosh.play();
 			}
 		});
 
@@ -143,7 +161,7 @@ function Game(){
 		$(document).keydown(function(event){
 			if( event.keyCode == 66 ){
 				abbas.setBoosting(true);
-				sounds.boost.play();
+				// sounds.boost.play();
 			}
 		});
 
@@ -157,53 +175,15 @@ function Game(){
 
 }
 
-var abbas = (function(){
-	var is_gliding = false;
-	var is_boosting = false;
-
-	return {
-		fly: function(){
-			if( $('#abbas').y() >= -100 ){
-				$('#abbas').xy(100, -100, true);
-				$('#abbas').xy(100, -100, true);
-			}
-			else{
-				var jump = - ($('#abbas').y() + 250);
-				$('#abbas').xy(200,jump, true);
-			}
-			$("#abbas").setAnimation(animation["player"]["up"]);
-
-			setTimeout(function(){
-				$("#abbas").setAnimation(animation["player"]["idle"]);
-			}, 1000);
-		},
-		glide:function(){
-			$("#abbas").setAnimation(animation["player"]["glide"]);
-			is_gliding = true;
-		},
-		isGliding:function(){
-			return is_gliding;
-		},
-		stopGliding:function(){
-			is_gliding = false;
-		},
-		isBoosting: function(){
-			return is_boosting;
-		},
-		setBoosting: function(state){
-			is_boosting = state;
-		}
-	};
-
-})();
-
 var helper = (function(){
+	var timer = 0;
+	var grace = false;
 	return {
 		gameOver: function(){
 			$("#playground").append('<div id="gameover">GAME OVER <p> PLAY AGAIN </p></div>');
 			$("#player").fadeTo(2000,0);
 			$("#background").fadeTo(1000,0);
-			sounds.bgm.stop();
+			// sounds.bgm.stop();
 		},
 		makeItMove: function(id, speed){
 			return ($('#'+id).x() - speed - BACKGROUND_WIDTH) % (-2 * BACKGROUND_WIDTH) + BACKGROUND_WIDTH;
@@ -235,6 +215,48 @@ var helper = (function(){
 			$('#base_b').x( helper.makeItMove('base_b', base), false );
 			$('#grass_b').x( helper.makeItMove('grass_b', grass), false );
 
+		},
+
+		createObstacle: function(){
+			var spawn_rate = Math.random();
+			var abbas_height = $('#player').y();
+			if( spawn_rate > 0.04 && spawn_rate < 0.05 ){
+				console.log(abbas_height);
+				var name = "bird_"+Math.ceil(Math.random()*1000);
+				$("#objects").addSprite(name, {animation: animation["obstacle"]["bird"],
+					posx: PLAYGROUND_WIDTH, posy: abbas_height,
+					width: 100, height: 80});
+				$("#"+name).addClass("obstacle");
+				$("#"+name)[0].obstacle = new Bird($("#"+name));
+				console.log("spawn");
+				// console.log($("#"+name)[0].obstacle);
+			}
+
+			$(".obstacle").each(function(){
+				this.obstacle.update();
+
+				var collided = $("#abbas").collision("#objects, .obstacle");
+
+				if(collided.length > 0){
+					timer = timer + 1;					
+					if(timer > 20 && grace === false){
+						abbas.damage();
+						grace = true;
+						// sounds.hit.play();
+						setTimeout(function(){
+							grace = false;
+						}, 1000);
+					}
+				}
+				else{
+					timer = 0;
+				}
+
+				if($(this).x() < -50 ){
+					$(this).remove();
+					console.log("removed!");
+				}
+			});
 		}
 	};
 })();
